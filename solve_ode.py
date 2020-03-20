@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.integrate import solve_ivp
+import discretize as dc
 
 def integ_breakage(breakage, z0, dbs, t, n, p, delta):
     def dzdt(t, z):
@@ -29,6 +30,7 @@ def phi_breakage(breakage, z, dbs, n, p, delta):
     
     for i in range(n):
         yr = y.copy()
+        
         yl = y.copy()
         yr[i] += delta
         yl[i] -= delta
@@ -57,8 +59,8 @@ def discretize(bfunc, Sfunc, L, n, p, k, delta):
     Sdr = np.empty((p,n))
     Sdl = np.empty((p,n))
     
-    bd = breakage_discretize(Sfunc, bfunc, L, n, k)
-    Sd = selection_discretize(Sfunc, bfunc, L, n, k, bd)
+    bd = dc.breakage_discretize(Sfunc, bfunc, L, n, k)
+    Sd = dc.selection_discretize(Sfunc, bfunc, L, n, k, bd)
     
     for i in range(p):
         kr = k.copy()

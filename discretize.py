@@ -1,27 +1,29 @@
 import numpy as np
 from scipy.integrate import quad,dblquad
 
-def breakage_discretize(Sfunc, bfunc, L, n, k):
+def num_integrand(x, y, k, *args):
+    return x**3 * selection_szdp(y, k) * break_lognormal(x, y, k, args[0], args[1])
+
+def den_integrand(x, k, *args):
+    return x**3 * selection_szdp(x, k)
+
+def breakage_discretize(L, n, k, *args):
     L = np.insert(L, 0, 0)
     bd = np.zeros((n, n))
-    
-    def num_func(x,y):
-        return x**3 * Sfunc(y, k) * bfunc(x, y, k)
-    
-    def den_func(x):
-        return x**3 * Sfunc(x, k)
-    
+
     for i in range(n):
-        den, err = quad(den_func, L[i], L[i+1])
+        den, err = quad(den_integrand, L[i], L[i+1], args=(k, *args))
         assert den != 0, 'breakage_discretize: division by zero'
         for j in range(i):
-            num, err = dblquad(num_func, L[i], L[i+1],
-                               lambda x: L[j], lambda x: L[j+1])
+            num, err = dblquad(num_integrand, L[i], L[i+1],
+                               lambda x: L[j], lambda x: L[j+1],
+                               args=(k, *args))
             Li = (L[i]+L[i+1])/2
             Lj = (L[j]+L[j+1])/2
             bd[j, i] = (Li / Lj)**3 * num / den
-        num, err = dblquad(num_func, L[i], L[i+1],
-                           lambda x: L[i], lambda x: x)
+        num, err = dblquad(num_integrand, L[i], L[i+1],
+                           lambda x: L[i], lambda x: x,
+                           args=(k, *args))
         bd[i, i] = num / den
         
     return bd 
