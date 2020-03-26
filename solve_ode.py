@@ -1,22 +1,26 @@
 import numpy as np
 from scipy.integrate import solve_ivp
-import discretize as dc
+from joblib import Memory
 
-def integ_breakage(breakage, z0, dbs, t, n, p, delta):
+cachedir = './cachedir'
+memory = Memory(cachedir)
+
+from discretize import breakage_discretize, selection_discretize
+from pbm import breakage
+
+def evolve(ode, z0, dbs, t, n, p, delta=1e-8):
     def dzdt(t, z):
-        return phi_breakage(breakage, z, dbs, n, p, delta)
-    solution = solve_ivp(dzdt, [t[0],t[-1]], z0, method = 'Radau', t_eval = t)
+        return phi_breakage(ode, z, dbs, n, p, delta)
+    solution = solve_ivp(dzdt, [t[0],t[-1]], z0, method='Radau', t_eval=t)
     return solution.y, solution.success
 
 
-
-def integ_breakage_onestep(breakage, z, dbs, t, n, p, delta):
+def evolve_onestep(ode, z, dbs, t, n, p, delta):
     def dxdt(t, x):
-        return phi_breakage(breakage, x, dbs, n, p, delta)
+        return phi_breakage(ode, x, dbs, n, p, delta)
     solution = solve_ivp(dxdt, [t[0],t[-1]], z, method = 'Radau', t_eval = t)
     Z = solution.y[:,-1]
     return Z, solution.success
-
 
 
 def phi_breakage(breakage, z, dbs, n, p, delta):
@@ -48,10 +52,8 @@ def phi_breakage(breakage, z, dbs, n, p, delta):
     phiz[n:] = dJdt.transpose().flatten()
     return phiz
 
-
-
-def discretize(bfunc, Sfunc, L, n, p, k, delta):
-    print('discretizing')
+def discretize(L, n, p, k, delta=1e-8, *args):
+    print('discretizing...')
     bd = np.empty((n,n))
     Sd = np.empty(n)
     bdr = np.empty((p,n,n))
@@ -59,17 +61,58 @@ def discretize(bfunc, Sfunc, L, n, p, k, delta):
     Sdr = np.empty((p,n))
     Sdl = np.empty((p,n))
     
-    bd = dc.breakage_discretize(Sfunc, bfunc, L, n, k)
-    Sd = dc.selection_discretize(Sfunc, bfunc, L, n, k, bd)
+    bd = breakage_discretize(L, n, k, *args)
+    Sd = selection_discretize(L, n, k, bd, *args)
     
     for i in range(p):
         kr = k.copy()
         kl = k.copy()
         kr[i] += delta
         kl[i] -= delta
-        bdr[i] = breakage_discretize(Sfunc, bfunc, L, n, kr)
-        bdl[i] = breakage_discretize(Sfunc, bfunc, L, n, kl)
-        Sdr[i] = selection_discretize(Sfunc, bfunc, L, n, kr, bdr[i])
-        Sdl[i] = selection_discretize(Sfunc, bfunc, L, n, kl, bdl[i])
+        bdr[i] = breakage_discretize(L, n, kr, *args)
+        bdl[i] = breakage_discretize(L, n, kl, *args)
+        Sdr[i] = selection_discretize(L, n, kr, bdr[i], *args)
+        Sdl[i] = selection_discretize(L, n, kl, bdl[i], *args)
         
     return bd, Sd, bdr, Sdr, bdl, Sdl
+
+def solve_jac(ode, yhat, dbs, t, n, p, N, scalar, delta):
+    print('Solving ODE...')
+    # initial condition J0 = 0
+    if scalar:
+        y0 = yhat[0]
+    else:
+        y0 = yhat[:,0]
+        
+    r = np.zeros((n, N))    
+    Z0 = np.zeros(n * (p + 1))
+    Z0[0:n] = y0.copy()
+    
+    Z, suc = evolve(ode, Z0, dbs, t, n, p, delta=1e-8)
+        
+    Y = Z[0:n]
+    J = Z[n:]
+    Jt = np.hsplit(J,N)
+    
+    for i in range(N):
+        Jt[i] = Jt[i].reshape(p,n).transpose()
+        
+    return Y, Jt
+
+
+if __name__ == '__main__':
+    import time
+    from data_import import importing
+    
+    k0 = np.array([1e-7,0.8,0.15])
+    length, volume, number, N0, Y0, mu, sigma, t, n, N, p, Q =\
+        importing(k0)
+    arguments = [mu, sigma]
+    tic = time.time()
+    dbs = discretize(length, n, p, k0, 1e-8, *arguments)
+    duration = time.time() - tic
+    print('discretization takes %f seconds' % duration)
+    tic = time.time()
+    Y, Jac = solve_jac(breakage, number, dbs, t, n, p, N, False, delta=1e-8)
+    duration = time.time() - tic
+    print('solving ODE takes %f seconds' % duration)

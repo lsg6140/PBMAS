@@ -1,24 +1,22 @@
-from scipy.special import erfc
+# cython: language_level=3
+
 import numpy as np
+from libc.math cimport exp, log, sqrt, erfc
 
 def lnpdf(x, m, sg):
-    num = np.exp(-(np.log(x) - m)**2 / (2 * sg**2))
-    den = x * sg * np.sqrt(2 * np.pi)
+    num = exp(-(log(x) - m)**2 / (2 * sg**2))
+    den = x * sg * sqrt(2 * np.pi)
     return num / den
 
 def lognorm_b(x, y, m, sg):
     assert sg > 0, "sigma must be larger than 0"
    
     num = lnpdf(x, m, sg)
-    den = erfc(-(np.log(y) - m) / (np.sqrt(2) * sg))/2
+    den = erfc(-(log(y) - m) / (sqrt(2) * sg))/2
 
-    # In case 'y' is too small compared to 'mu',
-    # 'den' can be numerically zero 
-    # if it is smaller than the machine precision epsilon 
-    # which is not correct theoretically
     if den == 0:
         den = np.finfo(float).eps
-    # convert volume to number
+
     return (y / x)**3 * num / den
 
 def breakagefunc(x, y, k, *args):

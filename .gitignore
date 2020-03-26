@@ -1,2 +1,4 @@
 .ipynb*
+*.c
+*.so
 __pychche__/

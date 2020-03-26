@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 from scipy.special import erfc
 import numpy as np
 
@@ -12,13 +14,9 @@ def lognorm_b(x, y, m, sg):
     num = lnpdf(x, m, sg)
     den = erfc(-(np.log(y) - m) / (np.sqrt(2) * sg))/2
 
-    # In case 'y' is too small compared to 'mu',
-    # 'den' can be numerically zero 
-    # if it is smaller than the machine precision epsilon 
-    # which is not correct theoretically
     if den == 0:
         den = np.finfo(float).eps
-    # convert volume to number
+        
     return (y / x)**3 * num / den
 
 def breakagefunc(x, y, k, *args):

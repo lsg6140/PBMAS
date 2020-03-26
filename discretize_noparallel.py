@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.integrate import quad,dblquad
 from lognormal_cy import selectionfunc, breakagefunc
-from joblib import Memory, Parallel, delayed
+from joblib import Memory
 
 cachedir = './cachedir'
 memory = Memory(cachedir, verbose=0)
@@ -14,9 +14,9 @@ def num_integrand(x, y, k, *args):
 
 def breakage_discretize(L, n, k, *args):
     L = np.insert(L, 0, 0)
-    
-    def in_for_loop(i):
-        temp = np.zeros(n)
+    res = np.zeros((n, n))
+
+    for i in range(n):
         den, err = quad(den_integrand, L[i], L[i+1], args=(k, *args))
         assert den != 0, 'breakage_discretize: division by zero'
         for j in range(i):
@@ -25,17 +25,11 @@ def breakage_discretize(L, n, k, *args):
                                args=(k, *args))
             Li = (L[i]+L[i+1])/2
             Lj = (L[j]+L[j+1])/2
-            temp[j] = (Li / Lj)**3 * num / den
+            res[j, i] = (Li / Lj)**3 * num / den
         num, err = dblquad(num_integrand, L[i], L[i+1],
                            lambda x: L[i], lambda x: x,
                            args=(k, *args))
-        temp[i] = num / den
-        
-        return temp
-    
-    r = Parallel(n_jobs=-1)(delayed(in_for_loop)(i) for i in range(n))
-    
-    res = np.stack(r).T 
+        res[i, i] = num / den
         
     return res 
 
@@ -49,22 +43,21 @@ def selection_integrand(x, k, *args):
     return (particle_number(x, k, *args) - 1) * selectionfunc(x, k, args)
 
 def selection_discretize(L, n, k, breakage_mat, *args):
+    res = np.empty(n)
     L = np.insert(L, 0, 0)
     
-    def in_for_loop(i):
+    for i in range(1, n):
         integ = quad(selection_integrand, L[i], L[i+1], args=(k, *args))[0]
         num = integ / (L[i+1] - L[i])
         sum = np.sum(breakage_mat[:i+1, i])
         den = sum - 1
         assert den != 0, 'selection_discretize: division by zero'
-        return num / den
+        res[i] = num / den
         
-    r = Parallel(n_jobs=-1)(delayed(in_for_loop)(i) for i in range(1, n))
-    
-    res = np.zeros(n)
-    res[1:] = r
+    res[0] = 0.0
     return res
 
+@memory.cache
 def discretize(L, n, p, k, delta):
     print('discretizing...')
     bd = np.empty((n, n))
