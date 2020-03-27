@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib
 
 def plotvolume(Y, volume, time, length):
     V = np.empty(np.shape(Y))
@@ -23,3 +24,17 @@ def plotnumber(Y, yhat, time, length):
         axes[i].set_xlim([length[0],length[-1]])
         axes[i].title.set_text('t={0}'.format(time[i]))
     fig.show()
+    
+
+from data_import import importing
+from solve_ode import solve_jac
+from discretize import discretize
+from ode import breakage
+    
+k0 = np.array([1e-7, 0.8, 0.15])
+length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+args = [mu, sigma]
+dbs = discretize(length, n, p, k0, 1e-8, *args)
+Y, Jac = solve_jac(breakage, number, dbs, t, n, p, N, False, delta=1e-8)
+    
+plotvolume(Y, volume, t, length)

@@ -171,4 +171,158 @@ def discretize(method='python', it=1):
         aver_time = total / it
         print('discretization of selection takes %6.3f s.' % aver_time)
         
+def ode_check():
+    import discretize
+    import ode_orgn
+    import ode
     
+    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    number0 = number[:,0]
+    
+    
+    args = [mu, sigma]
+    
+    brk_mat, slc_vec = discretize.discretize(length, n, p, k0, 1e-8, *args)[0:2]
+    
+    dndt_org = ode_orgn.breakage(number0, brk_mat, slc_vec)
+    dndt = ode.breakage(number0, brk_mat, slc_vec)
+    
+    assert np.allclose(dndt_org, dndt), 'Error in ode'
+    print('No error')
+    
+def ode(method='python', it=10000):
+    import discretize
+    import ode_orgn
+    import ode
+    
+    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    number0 = number[:,0]
+    
+    
+    args = [mu, sigma]
+    
+    brk_mat, slc_vec = discretize.discretize(length, n, p, k0, 1e-8, *args)[0:2]
+    
+    if method == 'python':
+        total = 0
+        for i in range(it):
+            tic = time.time()
+            res = ode_orgn.breakage(number0, brk_mat, slc_vec)
+            toc = time.time()
+            total += toc - tic
+        aver_time = total / it * 1e6
+        print('constructing ode takes %5.2f \u03BCs.' % aver_time)
+            
+
+    elif method == 'cython':
+        total = 0
+        it *= 50
+        for i in range(it):
+            tic = time.time()
+            res = ode.breakage(number0, brk_mat, slc_vec)
+            toc = time.time()
+            total += toc - tic
+        aver_time = total / it * 1e6
+        print('constructing ode takes %5.2f \u03BCs.' % aver_time)
+    
+def phi_parallel_check():
+    import discretize
+    import phi_orgn
+    import phi_prlz
+    from ode import breakage
+    
+    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    number0 = number[:,0]
+    
+    
+    args = [mu, sigma]
+    
+    Z0 = np.zeros(n * (p + 1))
+    Z0[0:n] = number0.copy()
+    
+        
+    dbs = discretize.discretize(length, n, p, k0, 1e-8, *args)
+    
+    dzdt_orgn = phi_orgn.phi_breakage(breakage, Z0, dbs, n, p, 1e-8)
+    dzdt_prlz = phi_prlz.phi_breakage(breakage, Z0, dbs, n, p, 1e-8)
+    
+    assert np.allclose(dzdt_orgn, dzdt_prlz), 'Error in phi'
+    print('No error')
+    
+def phi_check():
+    import discretize
+    import phi_orgn
+    import phi_prlz
+    import ode
+    import ode_orgn
+    
+    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    number0 = number[:,0]
+    
+    
+    args = [mu, sigma]
+    
+    Z0 = np.zeros(n * (p + 1))
+    Z0[0:n] = number0.copy()
+    
+        
+    dbs = discretize.discretize(length, n, p, k0, 1e-8, *args)
+    
+    dzdt_orgn = phi_orgn.phi_breakage(ode_orgn.breakage, Z0, dbs, n, p, 1e-8)
+    dzdt = phi.phi_breakage(ode.breakage, Z0, dbs, n, p, 1e-8)
+    
+    assert np.allclose(dzdt_orgn, dzdt), 'Error in phi'
+    print('No error')
+    
+def phi(method='python', it=1000):
+    import discretize
+    import phi_orgn
+    import phi_prlz
+    import phi
+    from ode import breakage
+    
+    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    number0 = number[:,0]
+    
+    
+    args = [mu, sigma]
+    
+    Z0 = np.zeros(n * (p + 1))
+    Z0[0:n] = number0.copy()
+    
+    dbs = discretize.discretize(length, n, p, k0, 1e-8, *args)
+    
+    if method == 'python':
+        total = 0
+        for i in range(it):
+            tic = time.time()
+            res = phi_orgn.phi_breakage(breakage, Z0, dbs, n, p, 1e-8)
+            toc = time.time()
+            total += toc - tic
+        aver_time = total / it * 1e3
+        print('constructing phi takes %5.2f ms.' % aver_time)
+            
+    elif method == 'cython':
+        total = 0
+        for i in range(it):
+            tic = time.time()
+            res = phi.phi_breakage(breakage, Z0, dbs, n, p, 1e-8)
+            toc = time.time()
+            total += toc - tic
+        aver_time = total / it * 1e3
+        print('constructing phi takes %5.2f ms.' % aver_time)
+        
+    elif method == 'parallel':
+        total = 0
+        for i in range(it):
+            tic = time.time()
+            res = phi_prlz.phi_breakage(breakage, Z0, dbs, n, p, 1e-8)
+            toc = time.time()
+            total += toc - tic
+        aver_time = total / it * 1e3
+        print('constructing phi takes %5.2f ms.' % aver_time)

@@ -65,28 +65,30 @@ def selection_discretize(L, n, k, breakage_mat, *args):
     res[1:] = r
     return res
 
-def discretize(L, n, p, k, delta):
+@memory.cache
+def discretize(L, n, p, k, delta, *args):
     print('discretizing...')
-    bd = np.empty((n, n))
-    Sd = np.empty(n)
-    bdr = np.empty((p, n, n))
-    bdl = np.empty((p, n, n))
-    Sdr = np.empty((p, n))
-    Sdl = np.empty((p, n))
-    K = np.tile(k, [p, 1])
-    Kl = K - np.eye(p) * delta
-    Kr = K + np.eye(p) * delta
+    brk_mat = np.empty((n, n))
+    slc_vec = np.empty(n)
+    brk_mat_r = np.empty((p, n, n))
+    brk_mat_l = np.empty((p, n, n))
+    slc_vec_r = np.empty((p, n))
+    slc_vec_l = np.empty((p, n))
     
-    bd = breakage_discretize(L, n, k, *args)
-    Sd = selection_discretize(L, n, k, bd, *args)
+    K = np.tile(k, [p, 1])    
+    Kr = K + np.eye(p) * delta
+    Kl = K - np.eye(p) * delta
+    
+    brk_mat = breakage_discretize(L, n, k, *args)
+    slc_vec = selection_discretize(L, n, k, brk_mat, *args)
     
     for i in range(p):
-        bdr[i] = breakage_discretize(L, n, Kr[i], *args)
-        bdl[i] = breakage_discretize(L, n, Kl[i], *args)
-        Sdr[i] = selection_discretize(L, n, Kr[i], bdr[i], *args)
-        Sdl[i] = selection_discretize(L, n, Kl[i], bdl[i], *args)
+        brk_mat_r[i] = breakage_discretize(L, n, Kr[i], *args)
+        brk_mat_l[i] = breakage_discretize(L, n, Kl[i], *args)
+        slc_vec_r[i] = selection_discretize(L, n, Kr[i], brk_mat_r[i], *args)
+        slc_vec_l[i] = selection_discretize(L, n, Kl[i], brk_mat_l[i], *args)
         
-    return bd, Sd, bdr, Sdr, bdl, Sdl
+    return brk_mat, slc_vec, brk_mat_r, slc_vec_r, brk_mat_l, slc_vec_l
 
 if __name__ == '__main__':
     n = 10
