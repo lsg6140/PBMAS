@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib
+import time
 
 def plotvolume(Y, volume, time, length):
     V = np.empty(np.shape(Y))
@@ -26,15 +27,22 @@ def plotnumber(Y, yhat, time, length):
     fig.show()
     
 
-from data_import import importing
-from solve_ode import solve_jac
-from discretize import discretize
-from ode import breakage
+def plot(params=np.array([1e-1, 0.8, 0.15])):
+    from data_import import importing
+    from solve_ode import solve_jac
+    import pbm
     
-k0 = np.array([1e-7, 0.8, 0.15])
-length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
-args = [mu, sigma]
-dbs = discretize(length, n, p, k0, 1e-8, *args)
-Y, Jac = solve_jac(breakage, number, dbs, t, n, p, N, False, delta=1e-8)
     
-plotvolume(Y, volume, t, length)
+    k0 = np.asarray(params)
+    length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
+    args = [length, mu, sigma]
+    tic = time.time()
+    Y, Jac = solve_jac(pbm.phi, number, t, k0, n, p, N, False, 1e-8, *args)
+    toc = time.time() - tic
+    print('solving ODE took %5.2f seconds' % toc)
+
+    plotvolume(Y, volume, t, length)
+    
+
+if __name__ == '__main__':
+    plot()

@@ -19,7 +19,7 @@ def importing(k0):
     N = np.size(time)
     p = np.size(k0)
 
-    Q = np.diag(length**3).astype(DTYPE)
+    Q = np.diag(length**4).astype(DTYPE)
 
     # convert volume to number
     for i in range(N):

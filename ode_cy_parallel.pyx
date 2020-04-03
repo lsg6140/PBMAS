@@ -1,32 +1,36 @@
 # cython: language_level=3
+# distutils: extra_compile_args = -fopenmp
+# distutils: extra_link_args = -fopenmp
 
 import numpy as np
+from cython.parallel cimport prange
+from cython import boundscheck, wraparound
 
+@boundscheck(False)
+@wraparound(False)
 def breakage(number, brk_mat, slc_vec):
     cdef Py_ssize_t n = len(number)
     R1 = np.zeros(n)
     R2 = np.zeros(n)
     
     # Memoryview
-    cdef double[:] R1v = R1
-    cdef double[:] R2v = R2
-    cdef double[:] nv = number
-    cdef double[:, :] brkv = brk_mat
-    cdef double[:] slcv = slc_vec
+    cdef double[:] R1_view = R1
+    cdef double[:] R2_view = R2
+    cdef double[:] n_view = number
+    cdef double[:, :] brk_view = brk_mat
+    cdef double[:] slc_view = slc_vec
     
     cdef Py_ssize_t i, j
     cdef double sum
     
-    # Mechanism 1 (i=1~n, j=i~n) !!! with index 1~n
-    for i in range(n):
+    for i in prange(n, nogil=True):
         sum = 0
         for j in range(i, n):
-            sum += brkv[i, j] * slcv[j] * nv[j]
-        R1v[i] = sum
+            sum = sum + brk_view[i, j] * slc_view[j] * n_view[j]
+        R1_view[i] = sum
+        R2_view[i] = slc_view[i] * n_view[i]
         
-    # Mechanism 2 (i=2~n)
-    for i in range(1, n):
-        R2v[i] = slcv[i] * nv[i]
+    R2_view[0] = 0.0
 
     return R1 - R2
 

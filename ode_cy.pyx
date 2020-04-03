@@ -1,10 +1,21 @@
 # cython: language_level=3
 
 import numpy as np
+from cython import boundscheck, wraparound
 
-cpdef double[:] breakage(double[:] number, double[:, :] brk_mat, double[:] slc_vec):
+@boundscheck(False)
+@wraparound(False)
+def breakage(number, brk_mat, slc_vec):
     cdef Py_ssize_t n = len(number)
-    cdef double[:] dndt = np.zeros(n).astype(np.double)
+    R1 = np.zeros(n)
+    R2 = np.zeros(n)
+    
+    # Memoryview
+    cdef double[:] R1_view = R1
+    cdef double[:] R2_view = R2
+    cdef double[:] n_view = number
+    cdef double[:, :] brk_view = brk_mat
+    cdef double[:] slc_view = slc_vec
     
     cdef Py_ssize_t i, j
     cdef double sum
@@ -13,14 +24,14 @@ cpdef double[:] breakage(double[:] number, double[:, :] brk_mat, double[:] slc_v
     for i in range(n):
         sum = 0
         for j in range(i, n):
-            sum += brk_mat[i, j] * slc_vec[j] * number[j]
-        dndt[i] = sum
+            sum += brk_view[i, j] * slc_view[j] * n_view[j]
+        R1_view[i] = sum
         
     # Mechanism 2 (i=2~n)
     for i in range(1, n):
-        dndt[i] -= slc_vec[i] * number[i]
+        R2_view[i] = slc_view[i] * n_view[i]
 
-    return dndt
+    return R1 - R2
 
 
 

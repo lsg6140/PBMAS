@@ -1,6 +1,7 @@
 import numpy as np
+from ode import breakage
 
-def phi_breakage(breakage, z, dbs, n, p, delta):
+def phi_breakage(z, dbs, n, p, delta):
     # dbs: discretized breakage and selection functions
     z = z.astype(np.float)
     y = z[0:n]

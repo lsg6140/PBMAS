@@ -1,16 +1,16 @@
 import numpy as np
 from scipy.integrate import quad,dblquad
-from lognormal_cy import selectionfunc, breakagefunc
+from lognormal import selectionfunc, breakagefunc
 from joblib import Memory
 
 cachedir = './cachedir'
 memory = Memory(cachedir, verbose=0)
 
 def den_integrand(x, k, *args):
-    return x**3 * selectionfunc(x, k, args)
+    return x**3 * selectionfunc(x, k, *args)
 
 def num_integrand(x, y, k, *args):
-    return x**3 * selectionfunc(y, k, args) * breakagefunc(x, y, k, args)
+    return x**3 * selectionfunc(y, k, *args) * breakagefunc(x, y, k, *args)
 
 def breakage_discretize(L, n, k, *args):
     L = np.insert(L, 0, 0)
@@ -36,11 +36,11 @@ def breakage_discretize(L, n, k, *args):
 
 
 def particle_number(x, k, *args): 
-    res = quad(lambda a: breakagefunc(a, x, k, args), 0, x)[0]
+    res = quad(lambda a: breakagefunc(a, x, k, *args), 0, x)[0]
     return res
 
 def selection_integrand(x, k, *args):
-    return (particle_number(x, k, *args) - 1) * selectionfunc(x, k, args)
+    return (particle_number(x, k, *args) - 1) * selectionfunc(x, k, *args)
 
 def selection_discretize(L, n, k, breakage_mat, *args):
     res = np.empty(n)
