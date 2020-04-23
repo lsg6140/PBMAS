@@ -27,18 +27,16 @@ def lm_ode(phi, yhat, t, params, Q, opts=[1e-3, 1e-8, 1e-8, 1000], *args):
         N = np.size(t)
         
         if np.ndim(yhat) == 1:
-            scalar = True
             n = 1
             assert N == np.size(yhat), "Dimension mismatch with yhat and t"
         else:
-            scalar = False
             n = np.size(yhat, 0)
             assert N == np.size(yhat, 1), "Dimension mismatch with yhat and t"
             
         p = np.size(params)
         k = params.copy()
         
-        f, Y, hessian, gradient, r, fail = get_fYHg(phi, yhat, t, k, n, p, N, Q, scalar, delta, *args)
+        f, Y, hessian, gradient, r, fail = get_fYHg(phi, yhat, t, k, n, p, N, Q, delta, *args)
        
         assert not fail, "solving ODE with guessed parameters failed"
         f_old = f
@@ -68,7 +66,7 @@ def lm_ode(phi, yhat, t, params, Q, opts=[1e-3, 1e-8, 1e-8, 1000], *args):
             else:
                 k_new = k + h
                 
-                f, Y, hessian_new, gradient_new, r, fail = get_fYHg(phi, yhat, t, k_new, n, p, N, Q, scalar, delta, *args)
+                f, Y, hessian_new, gradient_new, r, fail = get_fYHg(phi, yhat, t, k_new, n, p, N, Q, delta, *args)
                 if fail:
                     f = f_old
                 else:

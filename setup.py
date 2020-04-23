@@ -3,7 +3,8 @@ from Cython.Build import cythonize
 
 extensions = [
     Extension("lognormal_cy", ["lognormal_cy.pyx"],),
-    Extension("lognormal_translated", ["lognormal_translated.pyx"],),
+    Extension("lognormal_cy_td", ["lognormal_cy_td.pyx"],),
+    Extension("lognormal_cy_critical", ["lognormal_cy_critical.pyx"],),
     Extension("ode_cy", ["ode_cy.pyx"],),
     Extension("ode_cy_cdef", ["ode_cy_cdef.pyx"],),
     Extension("ode_cy_parallel", ["ode_cy_parallel.pyx"],),

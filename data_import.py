@@ -8,6 +8,7 @@ def importing(k0):
     data = df.to_numpy()
     length = data[:,0].astype(DTYPE)
     volume = data[:,1:].astype(DTYPE)
+    volume /= 100 # Normalize to ratio
     number = np.empty(np.shape(volume), dtype=DTYPE) # Number density
     df2 = pd.read_csv('lognormal.csv')
     data2 = df2.to_numpy()
@@ -19,7 +20,7 @@ def importing(k0):
     N = np.size(time)
     p = np.size(k0)
 
-    Q = np.diag(length**4).astype(DTYPE)
+    Q = np.diag(length**6).astype(DTYPE)
 
     # convert volume to number
     for i in range(N):

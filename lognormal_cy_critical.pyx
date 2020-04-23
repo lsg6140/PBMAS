@@ -1,5 +1,6 @@
 # cython: language_level=3
 
+# no time dependent
 import numpy as np
 from libc.math cimport exp, log, sqrt, erfc
 
@@ -26,5 +27,6 @@ cpdef double breakagefunc(double x, double y, double[:] k, args):
                     + (1 - k[1] - k[2]) * lognorm_b(x, y, mu[2], sigma[2])
     return res
 
-cpdef double selectionfunc(double y, double[:] k, args):
-    return k[0] * y**3
+cpdef double selectionfunc(double x, double[:] k, args):
+    cdef int p = args[2]
+    return k[0] / (1 + exp(-k[3] * (x - k[4])))

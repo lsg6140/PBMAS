@@ -89,7 +89,7 @@ def selection(method='python', it=10000000):
 
 
 def discretize_cython_check():
-    import discretize       # this imports lognormal_cy.py
+    import discretize       # this imports lognormal_translated.py
     import discretize_cy
     import discretize_py    # this imports lognormal.py
     
@@ -117,7 +117,7 @@ def discretize_parallel_check():
     import discretize
     import discretize_parallel
     
-    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    k0 = np.array([1.5e-07, 4.8e-01, 3.9e-01], dtype=DTYPE)
     length, _, _, _, mu, sigma, _, n, _, _, _ = importing(k0)
     
     
@@ -140,7 +140,7 @@ def discretize(method='python', it=1):
     import discretize_cy
     import discretize_parallel
     
-    k0 = np.array([1e-1,0.8,0.15], dtype=DTYPE)
+    k0 = np.array([1.5e-07, 4.8e-01, 3.9e-01], dtype=DTYPE)
     length, _, _, _, mu, sigma, _, n, _, _, _ = importing(k0)
        
     args = [mu, sigma]    
@@ -312,7 +312,7 @@ def phi_check():
     import phi
     import phi_cy
     
-    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    k0 = np.array([1.5e-07, 4.8e-01, 3.9e-01], dtype=DTYPE)
     length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
     number0 = number[:,0]
     
@@ -333,11 +333,11 @@ def phi_check():
     
     
 def phi_parallel_check():
-    import discretize
+    import discretize_parallel
     import phi_cy
     import phi_cy_parallel
     
-    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    k0 = np.array([1.5e-07, 4.8e-01, 3.9e-01], dtype=DTYPE)
     length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
     number0 = number[:,0]
     
@@ -348,7 +348,7 @@ def phi_parallel_check():
     Z0[0:n] = number0.copy()
     
         
-    dbs = discretize.discretize(length, n, p, k0, 1e-8, *args)
+    dbs = discretize_parallel.discretize(length, n, p, k0, 1e-8, *args)
     
     dzdt_serial = phi_cy.phi_breakage(Z0, dbs, n, p, 1e-8)
     dzdt_parallel = phi_cy_parallel.phi_breakage(Z0, dbs, n, p, 1e-8)
@@ -359,12 +359,12 @@ def phi_parallel_check():
     
     
 def phi(method='python', it=1000):
-    import discretize
+    import discretize_parallel
     import phi
     import phi_cy
     import phi_cy_parallel
     
-    k0 = np.array([1e-7,0.8,0.15], dtype=DTYPE)
+    k0 = np.array([1.5e-07, 4.8e-01, 3.9e-01], dtype=DTYPE)
     length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
     number0 = number[:,0]
     
@@ -374,7 +374,7 @@ def phi(method='python', it=1000):
     Z0 = np.zeros(n * (p + 1))
     Z0[0:n] = number0.copy()
     
-    dbs = discretize.discretize(length, n, p, k0, 1e-8, *args)
+    dbs = discretize_parallel.discretize(length, n, p, k0, 1e-8, *args)
     
     if method == 'python':
         total = 0

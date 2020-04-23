@@ -1,5 +1,6 @@
 # cython: language_level=3
 
+# no time dependent
 import numpy as np
 from libc.math cimport exp, log, sqrt, erfc
 
@@ -10,7 +11,8 @@ cdef double lnpdf(double x, double m, double sg):
     return num / den
 
 cdef double lognorm_b(double x, double y, double m, double sg):
-    assert sg > 0, "sigma must be larger than 0"
+    assert sg > 0, "sigma must be larger than 0"   
+    m += sg**2
     cdef double num = lnpdf(x, m, sg)
     cdef double den = erfc(-(log(y) - m) / (sqrt(2) * sg)) / 2
     if den == 0:
@@ -25,5 +27,6 @@ cpdef double breakagefunc(double x, double y, double[:] k, args):
                     + (1 - k[1] - k[2]) * lognorm_b(x, y, mu[2], sigma[2])
     return res
 
-cpdef double selectionfunc(double y, double[:] k, args):
-    return k[0] * y**3
+cpdef double selectionfunc(double x, double[:] k, args):
+    cdef int p = args[2]
+    return k[0] * x**p

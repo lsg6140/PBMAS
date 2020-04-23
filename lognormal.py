@@ -8,6 +8,7 @@ def lnpdf(x, m, sg):
 
 def lognorm_b(x, y, m, sg):
     assert sg > 0, "sigma must be larger than 0"
+    m += sg**2
    
     num = lnpdf(x, m, sg)
     den = erfc(-(np.log(y) - m) / (np.sqrt(2) * sg))/2

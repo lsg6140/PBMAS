@@ -1,4 +1,4 @@
-from discretize_parallel import discretize
+from discretize_parallel_critical import discretize
 from phi_cy_parallel import phi_breakage
 
 def phi(z, t, params, n, p, delta, *args):
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     from data_import import importing
     from pbm import phi
     
-    k0 = np.array([1e-1, 0.8, 0.15])
+    k0 = np.array([1e-1, 0.8, 0.15, 3.0, 50.0])
     length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
     args = [length, mu, sigma]
     

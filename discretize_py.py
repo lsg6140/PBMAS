@@ -57,6 +57,7 @@ def selection_discretize(L, n, k, breakage_mat, *args):
     res[0] = 0.0
     return res
 
+
 @memory.cache
 def discretize(L, n, p, k, delta, *args):
     print('discretizing...')

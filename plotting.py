@@ -27,7 +27,7 @@ def plotnumber(Y, yhat, time, length):
     fig.show()
     
 
-def plot(params=np.array([1e-1, 0.8, 0.15])):
+def plot(params=np.array([5e-04, 5e-01, 3e-01, 3.0, 100])):
     from data_import import importing
     from solve_ode import solve_jac
     import pbm
@@ -35,13 +35,21 @@ def plot(params=np.array([1e-1, 0.8, 0.15])):
     
     k0 = np.asarray(params)
     length, volume, number, Y0, mu, sigma, t, n, N, p, Q = importing(k0)
-    args = [length, mu, sigma]
+    args = [length, mu, sigma, 2]
     tic = time.time()
     Y, Jac = solve_jac(pbm.phi, number, t, k0, n, p, N, False, 1e-8, *args)
     toc = time.time() - tic
     print('solving ODE took %5.2f seconds' % toc)
+    
+    f = 0
+    r = number - Y
+    
+    for i in range(N):
+        f += r[:, i] @ Q @ r[:, i] / 2
 
     plotvolume(Y, volume, t, length)
+    print('SSE is ', f)
+    return r
     
 
 if __name__ == '__main__':

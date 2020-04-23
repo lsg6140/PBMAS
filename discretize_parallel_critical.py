@@ -1,7 +1,7 @@
 # no time dependent
 import numpy as np
 from scipy.integrate import quad,dblquad
-from lognormal_cy import selectionfunc, breakagefunc
+from lognormal_cy_critical import selectionfunc, breakagefunc
 from joblib import Memory, Parallel, delayed
 
 cachedir = './cachedir'

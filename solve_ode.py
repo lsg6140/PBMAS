@@ -2,22 +2,21 @@ import numpy as np
 from scipy.integrate import solve_ivp
 
 def evolve(phi, z0, t, params, n, p, delta, *args):
-    print('solving ODE...')
     def dzdt(t, z):
         return phi(z, t, params, n, p, delta, *args)
-    solution = solve_ivp(dzdt, [t[0],t[-1]], z0, method='Radau', t_eval=t)
+    solution = solve_ivp(dzdt, [t[0], t[-1]], z0, method='Radau', t_eval=t)
     return solution.y, solution.success
 
 
 def evolve_onestep(phi, z, t, params, n, p, delta, *args):
-    def dzdt(t, x):
+    def dzdt(t, z):
         return phi(z, t, params, n, p, delta, *args)
-    solution = solve_ivp(dzdt, [t[0],t[-1]], z, method = 'Radau', t_eval = t)
+    solution = solve_ivp(dzdt, [t[0], t[-1]], z, method='Radau', t_eval=t)
     Z = solution.y[:,-1]
     return Z, solution.success
 
+
 def solve_jac(phi, yhat, t, params, n, p, N, scalar, delta, *args):
-    print('Solving ODE...')
     # initial condition J0 = 0
     if scalar:
         y0 = yhat[0]
@@ -27,7 +26,7 @@ def solve_jac(phi, yhat, t, params, n, p, N, scalar, delta, *args):
     Z0 = np.zeros(n * (p + 1))
     Z0[0:n] = y0.copy()
     
-    Z, suc =evolve(phi, Z0, t, params, n, p, delta, *args)
+    Z, suc = evolve(phi, Z0, t, params, n, p, delta, *args)
         
     Y = Z[0:n]
     J = Z[n:]

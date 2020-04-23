@@ -2,3 +2,8 @@
 *.c
 *.so
 __pychche__/
+PBM.aux
+PBM.log
+PBM.pdf
+PBM.synctex.gz
+NormalODE
